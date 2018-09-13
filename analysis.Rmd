@@ -1,0 +1,26 @@
+---
+title: "analysis"
+author: "Joshua Rosenberg"
+date: "9/13/2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Loading, setting up
+
+```{r, load-packages}
+# install.packages("tidyverse")
+library(tidyverse)
+```
+
+```{r, load-data}
+library(readr)
+d <- read_csv("Teacher Education Technology Competencies Survey_September 13, 2018_09.02.csv")
+```
+
+```{r, check-that-data-loaded}
+d
+```
