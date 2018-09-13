@@ -14,6 +14,8 @@ knitr::opts_chunk$set(echo = TRUE)
 ```{r, load-packages}
 # install.packages("tidyverse")
 library(tidyverse)
+# install.packages("usethis")
+usethis::use_git_ignore("*.csv") # this ignores any CSV files in your directory (so they aren't shared publicly)
 ```
 
 ```{r, load-data}
