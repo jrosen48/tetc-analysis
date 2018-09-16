@@ -19,10 +19,74 @@ usethis::use_git_ignore("*.csv") # this ignores any CSV files in your directory 
 ```
 
 ```{r, load-data}
-library(readr)
-d <- read_csv("Teacher Education Technology Competencies Survey_September 13, 2018_09.02.csv")
+d <- read_csv("Teacher Education Technology Competencies Survey_September 15, 2018_13.07.csv")
 ```
 
 ```{r, check-that-data-loaded}
-d
+d %>% 
+    count(Q7) %>% 
+    mutate(early = str_detect(Q7, "Early"),
+           elem = str_detect(Q7, "Elem"),
+           middle = str_detect(Q7, "Middle"),
+           high = str_detect(Q7, "high"),
+           other = str_detect(Q7, "Other")) %>% 
+    gather(key, val, early:other) %>% 
+    slice(2:nrow(.)) %>% 
+    filter(val == TRUE) %>% 
+    group_by(key) %>% 
+    summarize(sum(n)/120)
+
+d %>% 
+    count(Q8) %>% 
+    mutate(english = str_detect(Q8, "English"),
+           soc = str_detect(Q8, "Social"),
+           career = str_detect(Q8, "Career"),
+           science = str_detect(Q8, "Science"),
+           math = str_detect(Q8, "Mathematics"),
+           tech = str_detect(Q8, "Technology"),
+           other = str_detect(Q8, "Other")) %>% 
+    gather(key, val, english:other) %>% 
+    slice(2:nrow(.)) %>% 
+    filter(val == TRUE) %>% 
+    group_by(key) %>% 
+    summarize(sum(n)/120)
+```
+
+```{r, plot}
+p <- d %>% 
+    select(Q11_1:Q11_12) %>% 
+    set_names(1:12) %>% 
+    slice(2:nrow(.)) %>% 
+    mutate_all(str_extract, "\\(?[0-9,.]+\\)?") %>% 
+    mutate_all(as.integer) %>% 
+    gather(key, val) %>% 
+    mutate(key = as.integer(key)) %>% 
+    ggplot(aes(x = reorder(key, val), y = val)) + 
+    stat_summary(fun.y = mean, geom = "bar", fill = "lightblue", color = "darkgray") + 
+    stat_summary(fun.data = mean_cl_normal, geom = "errorbar", color = "black") +
+    coord_flip() +
+    theme_bw() +
+    xlab(NULL) + 
+    ylab(NULL) +
+    labs(caption = "From 120 respondents")
+
+p
+
+ggsave("tetc-draft.png", width = 16.20/3, height = 10/2)
+
+d %>% 
+    select(Q11_1:Q11_12) %>% 
+    set_names(1:12) %>% 
+    slice(2:nrow(.)) %>% 
+    mutate_all(str_extract, "\\(?[0-9,.]+\\)?") %>% 
+    mutate_all(as.integer) %>% 
+    gather(key, val) %>% 
+    group_by(key) %>% 
+    summarize(mean_val = mean(val),
+              se = (sd(val) * 1.96)/sqrt(120)) %>% 
+    mutate(key = as.integer(key)) %>% 
+    arrange(key) %>% 
+    mutate(mean_se = str_c(round(mean_val, 3), " (", round(se,3), ")")) %>% 
+    select(mean_se) %>% 
+    clipr::write_clip()
 ```
