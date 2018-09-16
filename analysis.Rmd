@@ -6,12 +6,12 @@ output: html_document
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = TRUE, messages = FALSE)
 ```
 
 ## Loading, setting up
 
-```{r, load-packages}
+```{r, load-packages, message = FALSE}
 # install.packages("tidyverse")
 library(tidyverse)
 # install.packages("usethis")
@@ -28,6 +28,7 @@ d <- slice(d, 3:nrow(d)) # the first two rows seem to have issues; this removes 
 ```
 
 ```{r, proportion-by-grade-level}
+d %>%     
     count(Q7) %>% 
     mutate(early = str_detect(Q7, "Early"),
            elem = str_detect(Q7, "Elem"),
@@ -92,4 +93,12 @@ p <- d %>%
 p
 
 # ggsave("tetc-draft.png", width = 16.20/3, height = 10/2)
+```
+
+```{r, profiles-compare-solutions}
+d %>% tidyLPA::compare_solutions_mplus(Q11_1:Q11_12)
+```
+
+```{r}
+d %>% tidyLPA::compare_solutions_mplus(Q11_1:Q11_12)
 ```

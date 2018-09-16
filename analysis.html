@@ -131,16 +131,8 @@ $(document).ready(function () {
 <div id="loading-setting-up" class="section level2">
 <h2>Loading, setting up</h2>
 <pre class="r"><code># install.packages(&quot;tidyverse&quot;)
-library(tidyverse)</code></pre>
-<pre><code>## ── Attaching packages ─────────────────────────────────────────────────────── tidyverse 1.2.1 ──</code></pre>
-<pre><code>## ✔ ggplot2 3.0.0     ✔ purrr   0.2.5
-## ✔ tibble  1.4.2     ✔ dplyr   0.7.6
-## ✔ tidyr   0.8.1     ✔ stringr 1.3.1
-## ✔ readr   1.1.1     ✔ forcats 0.3.0</code></pre>
-<pre><code>## ── Conflicts ────────────────────────────────────────────────────────── tidyverse_conflicts() ──
-## ✖ dplyr::filter() masks stats::filter()
-## ✖ dplyr::lag()    masks stats::lag()</code></pre>
-<pre class="r"><code># install.packages(&quot;usethis&quot;)
+library(tidyverse)
+# install.packages(&quot;usethis&quot;)
 usethis::use_git_ignore(&quot;*.csv&quot;) # this ignores any CSV files in your directory (so they aren't shared publicly)</code></pre>
 <pre><code>## ✔ Setting active project to '/Users/joshuarosenberg/Documents/tetc-analysis'</code></pre>
 <pre class="r"><code>d &lt;- read_csv(&quot;Teacher Education Technology Competencies Survey_September 15, 2018_13.07.csv&quot;)</code></pre>
