@@ -23,7 +23,11 @@ d <- read_csv("Teacher Education Technology Competencies Survey_September 15, 20
 ```
 
 ```{r, check-that-data-loaded}
-d %>% 
+d
+d <- slice(d, 3:nrow(d)) # the first two rows seem to have issues; this removes them
+```
+
+```{r, proportion-by-grade-level}
     count(Q7) %>% 
     mutate(early = str_detect(Q7, "Early"),
            elem = str_detect(Q7, "Elem"),
@@ -31,11 +35,12 @@ d %>%
            high = str_detect(Q7, "high"),
            other = str_detect(Q7, "Other")) %>% 
     gather(key, val, early:other) %>% 
-    slice(2:nrow(.)) %>% 
     filter(val == TRUE) %>% 
     group_by(key) %>% 
     summarize(sum(n)/120)
+```
 
+```{r, proportion-by-content-area}
 d %>% 
     count(Q8) %>% 
     mutate(english = str_detect(Q8, "English"),
@@ -46,17 +51,31 @@ d %>%
            tech = str_detect(Q8, "Technology"),
            other = str_detect(Q8, "Other")) %>% 
     gather(key, val, english:other) %>% 
-    slice(2:nrow(.)) %>% 
     filter(val == TRUE) %>% 
     group_by(key) %>% 
     summarize(sum(n)/120)
 ```
 
-```{r, plot}
+```{r, calc-means}
+d %>% 
+    select(Q11_1:Q11_12) %>% 
+    set_names(1:12) %>% 
+    mutate_all(str_extract, "\\(?[0-9,.]+\\)?") %>% 
+    mutate_all(as.integer) %>% 
+    gather(key, val) %>% 
+    group_by(key) %>% 
+    summarize(mean_val = mean(val),
+              se = (sd(val) * 1.96)/sqrt(120)) %>% 
+    mutate(key = as.integer(key)) %>% 
+    arrange(key) %>% 
+    mutate(mean_se = str_c(round(mean_val, 3), " (", round(se,3), ")")) %>% 
+    select(mean_se)
+```
+
+```{r, create-plot}
 p <- d %>% 
     select(Q11_1:Q11_12) %>% 
     set_names(1:12) %>% 
-    slice(2:nrow(.)) %>% 
     mutate_all(str_extract, "\\(?[0-9,.]+\\)?") %>% 
     mutate_all(as.integer) %>% 
     gather(key, val) %>% 
@@ -72,21 +91,5 @@ p <- d %>%
 
 p
 
-ggsave("tetc-draft.png", width = 16.20/3, height = 10/2)
-
-d %>% 
-    select(Q11_1:Q11_12) %>% 
-    set_names(1:12) %>% 
-    slice(2:nrow(.)) %>% 
-    mutate_all(str_extract, "\\(?[0-9,.]+\\)?") %>% 
-    mutate_all(as.integer) %>% 
-    gather(key, val) %>% 
-    group_by(key) %>% 
-    summarize(mean_val = mean(val),
-              se = (sd(val) * 1.96)/sqrt(120)) %>% 
-    mutate(key = as.integer(key)) %>% 
-    arrange(key) %>% 
-    mutate(mean_se = str_c(round(mean_val, 3), " (", round(se,3), ")")) %>% 
-    select(mean_se) %>% 
-    clipr::write_clip()
+# ggsave("tetc-draft.png", width = 16.20/3, height = 10/2)
 ```
