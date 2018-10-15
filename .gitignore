@@ -1,3 +1,4 @@
+.qualtrics.yml
 *.csv
 .Rproj.user
 .Rhistory

@@ -14,17 +14,22 @@ knitr::opts_chunk$set(echo = TRUE, messages = FALSE)
 ```{r, load-packages, message = FALSE}
 # install.packages("tidyverse")
 library(tidyverse)
+library(qualtRics)
 # install.packages("usethis")
 usethis::use_git_ignore("*.csv") # this ignores any CSV files in your directory (so they aren't shared publicly)
 ```
 
-```{r, load-data}
-d <- read_csv("Teacher Education Technology Competencies Survey_September 15, 2018_13.07.csv")
+```{r, load-data, eval = FALSE}
+d <- read_csv("Teacher Education Technology Competencies Survey_October 15, 2018_08.01.csv")
+```
+
+```{r}
+d <- getSurvey("SV_3JDqQlocnhQHEzj")
 ```
 
 ```{r, check-that-data-loaded}
 d
-d <- slice(d, 3:nrow(d)) # the first two rows seem to have issues; this removes them
+# d <- slice(d, 3:nrow(d)) # the first two rows seem to have issues; this removes them
 ```
 
 ```{r, proportion-by-grade-level}
@@ -38,7 +43,7 @@ d %>%
     gather(key, val, early:other) %>% 
     filter(val == TRUE) %>% 
     group_by(key) %>% 
-    summarize(sum(n)/120)
+    summarize(sum(n)/245)
 ```
 
 ```{r, proportion-by-content-area}
@@ -54,7 +59,7 @@ d %>%
     gather(key, val, english:other) %>% 
     filter(val == TRUE) %>% 
     group_by(key) %>% 
-    summarize(sum(n)/120)
+    summarize(sum(n)/245)
 ```
 
 ```{r, calc-means}
@@ -66,7 +71,7 @@ d %>%
     gather(key, val) %>% 
     group_by(key) %>% 
     summarize(mean_val = mean(val),
-              se = (sd(val) * 1.96)/sqrt(120)) %>% 
+              se = (sd(val) * 1.96)/sqrt(245)) %>% 
     mutate(key = as.integer(key)) %>% 
     arrange(key) %>% 
     mutate(mean_se = str_c(round(mean_val, 3), " (", round(se,3), ")")) %>% 
@@ -88,7 +93,7 @@ p <- d %>%
     theme_bw() +
     xlab(NULL) + 
     ylab(NULL) +
-    labs(caption = "From 120 respondents")
+    labs(caption = "From 245 respondents")
 
 p
 
