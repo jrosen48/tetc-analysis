@@ -11,6 +11,12 @@ knitr::opts_chunk$set(echo = TRUE, messages = FALSE)
 
 ## Loading, setting up
 
+In this section, we start out by doing:
+
+- x 
+- y 
+- z
+
 ```{r, load-packages, message = FALSE}
 # install.packages("tidyverse")
 library(tidyverse)
@@ -21,6 +27,7 @@ usethis::use_git_ignore("*.csv") # this ignores any CSV files in your directory 
 
 ```{r, load-data, eval = FALSE}
 d <- read_csv("Teacher Education Technology Competencies Survey_October 15, 2018_08.01.csv")
+d <- d %>% slice(3:nrow(.))
 ```
 
 ```{r}
@@ -32,13 +39,49 @@ d
 # d <- slice(d, 3:nrow(d)) # the first two rows seem to have issues; this removes them
 ```
 
+We were curious about plotting distributions of experience. This graph includes this:
+
+```{r, descriptives-plotting-distributions-of-experience}
+d %>% 
+    select(Q5_1, Q5_2) %>% 
+    set_names(c("years_k12_experience", "years_te_experience")) %>% 
+    gather(key, val) %>% 
+    ggplot(aes(x = val, fill = key,  alpha = .2)) +
+    geom_density()
+
+d %>% 
+    select(Q5_1, Q5_2) %>% 
+    mutate(id = 1:nrow(.)) %>% 
+    set_names(c("years_k12_experience", "years_te_experience", "id")) %>% 
+    # slice(1:50) %>% 
+    gather(key, val, -id) %>% 
+    ggplot(aes(x = reorder(as.factor(id), val), y = val, fill = key)) +
+    geom_col() +
+    theme_bw() +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+d %>% 
+    select(Q5_1, Q5_2) %>% 
+    set_names(c("years_k12_experience", "years_te_experience")) %>% 
+    mutate()
+    summarize_all(funs(mean, sd), na.rm = TRUE)
+
+# hist(to_plot$years_k12_experience)
+# hist(to_plot$years_te_experience)
+# 
+# ggplot(to_plot, aes(x = years_k12_experience)) + 
+#     geom_histogram() +
+#     theme_bw()
+```
+
+
+
 ```{r, proportion-by-grade-level}
 d %>%     
-    count(Q7) %>% 
-    mutate(early = str_detect(Q7, "Early"),
-           elem = str_detect(Q7, "Elem"),
-           middle = str_detect(Q7, "Middle"),
-           high = str_detect(Q7, "high"),
+    mutate(early = str_detect(Q7, "Early childhood teachers"),
+           elem = str_detect(Q7, "Elementary / primary teachers"),
+           middle = str_detect(Q7, "Middle grades / junior high school teachers"),
+           high = str_detect(Q7, "Secondary / high school teachers"),
            other = str_detect(Q7, "Other")) %>% 
     gather(key, val, early:other) %>% 
     filter(val == TRUE) %>% 
@@ -70,13 +113,17 @@ d %>%
     mutate_all(as.integer) %>% 
     gather(key, val) %>% 
     group_by(key) %>% 
-    summarize(mean_val = mean(val),
-              se = (sd(val) * 1.96)/sqrt(245)) %>% 
+    summarize(mean_val = mean(val, na.rm = TRUE),
+              se = (sd(val, na.rm = TRUE) * 1.96)/sqrt(245)) %>% 
     mutate(key = as.integer(key)) %>% 
     arrange(key) %>% 
     mutate(mean_se = str_c(round(mean_val, 3), " (", round(se,3), ")")) %>% 
     select(mean_se)
 ```
+
+Here it looks like we're finding that teachers with more years of experience seem to report lower ... 
+
+
 
 ```{r, create-plot}
 p <- d %>% 

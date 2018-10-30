@@ -1,0 +1,44 @@
+---
+title: "analysis"
+author: "Joshua Rosenberg"
+date: "9/13/2018"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, messages = FALSE)
+```
+
+## Loading, setting up
+
+In this section, we start out by doing:
+
+- x 
+- y 
+- z
+
+```{r, load-packages, message = FALSE}
+# install.packages("tidyverse")
+# library(tidyverse)
+library(qualtRics)
+# install.packages("usethis")
+usethis::use_git_ignore("*.csv") # this ignores any CSV files in your directory (so they aren't shared publicly)
+```
+
+```{r, load-data, eval = FALSE}
+d <- read_csv("Teacher Education Technology Competencies Survey_October 15, 2018_08.01.csv")
+```
+
+```{r}
+d <- getSurvey("SV_3JDqQlocnhQHEzj")
+```
+
+```{r}
+d
+```
+
+We did it!
+
+Yay.
