@@ -13,35 +13,83 @@ knitr::opts_chunk$set(echo = TRUE, messages = FALSE)
 
 In this section, we start out by doing:
 
-- x 
-- y 
-- z
-
 ```{r, load-packages, message = FALSE}
 # install.packages("tidyverse")
 library(tidyverse)
-library(qualtRics)
+# library(qualtRics)
 # install.packages("usethis")
 usethis::use_git_ignore("*.csv") # this ignores any CSV files in your directory (so they aren't shared publicly)
 ```
 
+Read the data:
+
 ```{r, load-data, eval = FALSE}
-d <- read_csv("Teacher Education Technology Competencies Survey_October 15, 2018_08.01.csv")
-d <- d %>% slice(3:nrow(.))
+d <- read_csv("full-tetcs-dataset.csv")
 ```
 
-```{r}
-d <- getSurvey("SV_3JDqQlocnhQHEzj")
-```
+Check that the data loaded:
 
 ```{r, check-that-data-loaded}
 d
-# d <- slice(d, 3:nrow(d)) # the first two rows seem to have issues; this removes them
 ```
 
-We were curious about plotting distributions of experience. This graph includes this:
+Process the TETCs variables:
 
-```{r, descriptives-plotting-distributions-of-experience}
+```{r}
+d <- d %>% 
+    select(Q11_1:Q11_12) %>% 
+    set_names(1:12) %>% 
+    mutate_all(str_extract, "\\(?[0-9,.]+\\)?") %>% 
+    mutate_all(as.integer) %>% 
+    set_names(str_c("v", 1:12))
+```
+
+# Factor analysis
+
+```{r}
+library(psych)
+parallel <- fa.parallel(d, fm = 'minres', fa = 'fa')
+print(m2, digits = 3, cutoff = 0.3, sort = FALSE)
+```
+
+There seems to be just one factor. 
+
+# Latent Profile Analysis
+
+```{r, eval = FALSE}
+library(tidyLPA)
+
+o <- d %>% compare_solutions_mplus(v1:v12)
+
+write_rds(o,"compare-solutions-mplus.rds")
+
+x <- d %>% 
+    estimate_profiles_mplus(v1:v12, n_profiles = 3, variances = 'equal', covariances = 'zero')
+
+write_rds(x, "x.rds")
+```
+
+```{r, eval = TRUE}
+o <- read_rds("compare-solutions-mplus.rds")
+x <- read_rds("x.rds")
+
+o[[2]] %>% knitr::kable()
+```
+
+The fit statistics don't suggest a clear pattern. 
+
+Perhaps a three profile solution:
+
+```{r}
+
+plot_profiles_mplus(x, to_center = TRUE)
+```
+
+There really seems to be groups only in terms of overall level of the twelve items; not any combinations of them variables in characteristic ways.
+
+# Josh to run content area and grade level 
+
+```{r, descriptives-plotting-distributions-of-experience, echo = FALSE, eval = FALSE}
 d %>% 
     select(Q5_1, Q5_2) %>% 
     set_names(c("years_k12_experience", "years_te_experience")) %>% 
@@ -65,15 +113,13 @@ d %>%
     set_names(c("years_k12_experience", "years_te_experience")) %>% 
     mutate()
     summarize_all(funs(mean, sd), na.rm = TRUE)
-
-# hist(to_plot$years_k12_experience)
-# hist(to_plot$years_te_experience)
-# 
-# ggplot(to_plot, aes(x = years_k12_experience)) + 
-#     geom_histogram() +
-#     theme_bw()
 ```
 
+Proportion by grade level:
+
+```{r}
+d
+```
 
 
 ```{r, proportion-by-grade-level}
