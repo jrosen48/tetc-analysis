@@ -12,6 +12,10 @@ html_document:
 knitr::opts_chunk$set(echo = TRUE, messages = FALSE, warning = FALSE)
 ```
 
+# Update on qualitative coding
+
+## Item #13 - Please explain the one or two technology competencies that you consider as being most important to your individual work as a teacher educator.
+
 ## Loading, setting up
 
 In this section, we start out by doing:
@@ -31,6 +35,31 @@ d <- read_csv("full-tetcs-dataset.csv")
 d <- d %>% slice(-c(1:2))
 ```
 
+Joining data - this is to join the qualitative data (not run right now)
+
+```{r, eval = FALSE}
+library(googlesheets)
+g <- gs_title("Teacher Education Technology Competencies Survey_November 12, 2018_20.32")
+d2 <- gs_read(g, ws = 2, skip = 1)
+d2 <- d2 %>% rename(Q13 = `Please explain the one or two technology competencies that you consider as being most important to your individual work as a teacher educator.`) %>% slice(-c(338:339))
+d3 <- gs_read(g, ws = 3, skip = 1)
+d3 <- d3 %>% rename(Q14 = `Please explain one or more of the technology competencies that you consider of low or no importance to your individual work as a teacher educator.`) %>% slice(-c(338:339))
+d4 <- gs_read(g, ws = 4, skip = 1)
+d4 <- d4 %>% rename(Q15 = `What is important in your work related to educational technology that is not reflected in the TETCs?`) %>% slice(-c(338:339))
+```
+
+```{r}
+d2i <- read_csv("q13[1].csv")
+d2ii <- d %>% inner_join(d2)
+d2f <- rbind(d2ii, d2i)
+
+d %>% 
+    inner_join(d3)
+
+d %>% 
+    inner_join(d4) 
+```
+
 Check that the data loaded:
 
 ```{r, check-that-data-loaded}
@@ -48,14 +77,75 @@ ds <- d %>%
     set_names(str_c("v", 1:12))
 ```
 
+```{r}
+dss <- ds %>% 
+    gather(key, val) %>% 
+    mutate(key = str_replace(key, "v", "TETC-"))
+
+dss$key = with(dss, reorder(key, val, mean, na.rm = TRUE))
+
+dss %>% 
+    ggplot(aes(x = reorder(key, val), y = val)) +
+    geom_violin() +
+    # geom_jitter() +
+    theme_bw() +
+    ylab("Value") +
+    xlab(NULL) +
+    ylim(1, 5)
+```
+
+```{r}
+library(ggridges)
+
+dss <- ds %>% 
+    gather(key, val) %>% 
+    mutate(key = str_replace(key, "v", "TETC-"))
+
+dss$key = with(dss, reorder(key, val, mean, na.rm = TRUE))
+
+dss %>% 
+    ggplot(aes(y = key, x = val)) +
+    geom_density_ridges(scale = .9) +
+    theme_bw() +
+    ylab("Value") +
+    xlab(NULL) +
+    xlim(1, 5)
+```
+
+```{r}
+ds %>% 
+    gather(key, val) %>% 
+    mutate(key = str_replace(key, "v", "TETC-")) %>% 
+    group_by(key) %>% 
+    summarize(mean_val = mean(val, na.rm = TRUE),
+              sd_val = sd(val, na.rm = TRUE)) %>% 
+    ggplot(aes(x = reorder(key, mean_val), y = mean_val)) +
+    geom_col() +
+    geom_errorbar(aes(ymin = mean_val-((2*sd_val)/sqrt(336)),
+                      ymax = mean_val+((2*sd_val)/sqrt(336)))) +
+    theme_bw() +
+    ylab("Value") +
+    xlab(NULL) +
+    ylim(0, 5)
+
+ggsave('tetc-plot.png', width = 8, height = 6)
+```
+
 # Factor analysis
 
 ```{r}
 parallel <- fa.parallel(ds, fm = 'minres', fa = 'fa')
 parallel
+VSS.scree(ds)
 ```
 
-There seems to be just one factor. 
+There seems to be just one factor. Though, there could be a case for two.
+
+```{r}
+f1 <- fac(ds, nfactors = 1)
+f2 <- fac(ds, nfactors = 2)
+f3 <- fac(ds, nfactors = 3)
+```
 
 # Latent Profile Analysis
 
@@ -109,7 +199,7 @@ df %>%
     slice(1:25)%>% 
     knitr::kable()
 ```
- 
+
 Let's look at the counts of the main ones for now:
 
 ```{r}
