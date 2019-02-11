@@ -32,12 +32,13 @@ Read the data:
 ```{r, load-data, eval = TRUE}
 # d <- read_csv("tetcs-survey-export.csv", skip = 0)
 d <- read_csv("full-tetcs-dataset.csv")
+# row 258 has NAs for the TETC variables
 d <- d %>% slice(-c(1:2))
 ```
 
 Joining data - this is to join the qualitative data (not run right now)
 
-```{r, eval = FALSE}
+```{r, eval = TRUE}
 library(googlesheets)
 g <- gs_title("Teacher Education Technology Competencies Survey_November 12, 2018_20.32")
 d2 <- gs_read(g, ws = 2, skip = 1)
@@ -75,6 +76,10 @@ ds <- d %>%
     mutate_all(str_extract, "\\(?[0-9,.]+\\)?") %>% 
     mutate_all(as.integer) %>% 
     set_names(str_c("v", 1:12))
+
+ds %>% 
+    psych::describe() %>% 
+    select(mean, sd, n)
 ```
 
 ```{r}
