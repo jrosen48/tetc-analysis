@@ -67,6 +67,19 @@ d %>%
     select(years_teach_exp = Q5_1, 
            yeras_te_exp = Q5_2,
            v1:v12) %>% 
+    as.matrix() %>% 
+     Hmisc::rcorr() %>% 
+    pluck(3) %>% 
+    as.data.frame() %>% 
+    select(1:2) %>% 
+    slice(3:nrow(.)) %>% 
+mutate_all(~ ifelse(. < .05, "*", "")) %>% 
+    clipr::write_clip()
+    
+d %>% 
+    select(years_teach_exp = Q5_1, 
+           yeras_te_exp = Q5_2,
+           v1:v12) %>% 
     corrr::correlate() %>% 
     corrr::shave() %>% 
     corrr::fashion() %>% 
@@ -104,6 +117,9 @@ dss %>%
     ylab("Value") +
     xlab(NULL) +
     xlim(1, 5)
+```
+```{r}
+summary(aov(val~key, data = dss))
 ```
 
 ```{r}
@@ -144,7 +160,9 @@ dm <- d %>%
     select(Q7_code, v1:v12) %>% 
     gather(key, val, -Q7_code)
 
-aov(val ~ Q7_code*key, data = dm)
+x <- aov(val ~ Q7_code*key, data = dm)
+x
+TukeyHSD(x)
 summary(aov(val ~ Q7_code*key, data = dm))
 
 d %>% 
@@ -187,6 +205,8 @@ dm <- d %>%
 
 aov(val ~ Q8_code*key, data = dm)
 summary(aov(val ~ Q8_code*key, data = dm))
+x <- aov(val ~ Q8_code*key, data = dm)
+TukeyHSD(x)
 
 dm %>% 
     select(Q8_code, v1:v12) %>% 
@@ -257,8 +277,8 @@ c14 <- dx %>%
     slice(13:24)
 
 dd <- data.frame(var = str_c("TETC", 1:12),
-           most_imp_r = as.numeric(diag(as.matrix(c13))),
-           least_imp_r = as.numeric(diag(as.matrix(c14))))
+                 most_imp_r = as.numeric(diag(as.matrix(c13))),
+                 least_imp_r = as.numeric(diag(as.matrix(c14))))
 
 write_csv(dd, "most-least-imp-corr.csv")
 ```
