@@ -1,0 +1,66 @@
+Q8,nn,code
+NA,47,Other
+Technology,36,STEM
+Science,34,STEM
+Other,32,Other
+English / Language Arts,31,Non-STEM
+History / Social Studies,21,Non-STEM
+Special Education,21,Special Education
+Mathematics,17,STEM
+"Mathematics,Science",7,STEM
+"Technology,Other",6,STEM
+Career Technical Education,4,STEM
+Music,4,Non-STEM
+"Science,Technology",4,STEM
+"English / Language Arts,Mathematics,Science,History / Social Studies,Physical Education & Health,Music,Fine Arts,World Languages,Special Education,Technology",3,Non-STEM
+"English / Language Arts,Other",3,Non-STEM
+"English / Language Arts,Technology,Other",3,Non-STEM
+Physical Education & Health,3,Non-STEM
+"Science,Other",3,STEM
+"Special Education,Other",3,Special Education
+"English / Language Arts,Mathematics,Science,History / Social Studies,Physical Education & Health",2,Other
+"English / Language Arts,Mathematics,Science,History / Social Studies,World Languages",2,Other
+"English / Language Arts,Technology",2,Other
+"History / Social Studies,Other",2,Other
+"History / Social Studies,Technology",2,Other
+"Mathematics,Science,Other",2,Other
+"Mathematics,Science,Special Education",2,Other
+"Science,Technology,Other",2,Other
+"Special Education,Technology",2,Other
+"Career Technical Education,Technology",1,STEM
+"English / Language Arts,History / Social Studies",1,Non-STEM
+"English / Language Arts,History / Social Studies,Fine Arts,Special Education,Other",1,Other
+"English / Language Arts,History / Social Studies,Special Education",1,Non-STEM
+"English / Language Arts,History / Social Studies,Technology",1,Other
+"English / Language Arts,History / Social Studies,World Languages,Technology",1,Other
+"English / Language Arts,Mathematics",1,Non-STEM
+"English / Language Arts,Mathematics,History / Social Studies",1,Other
+"English / Language Arts,Mathematics,Physical Education & Health,Technology",1,Other
+"English / Language Arts,Mathematics,Science,History / Social Studies",1,Other
+"English / Language Arts,Mathematics,Science,History / Social Studies,Fine Arts",1,Other
+"English / Language Arts,Mathematics,Science,History / Social Studies,Fine Arts,Other",1,Other
+"English / Language Arts,Mathematics,Science,History / Social Studies,Physical Education & Health,Fine Arts,Special Education,Technology",1,Other
+"English / Language Arts,Mathematics,Science,History / Social Studies,Physical Education & Health,Music,Fine Arts,World Languages",1,Other
+"English / Language Arts,Mathematics,Science,History / Social Studies,Physical Education & Health,Music,Fine Arts,World Languages,Special Education",1,Other
+"English / Language Arts,Mathematics,Science,History / Social Studies,Physical Education & Health,Music,Fine Arts,World Languages,Special Education,Career Technical Education,Technology",1,Other
+"English / Language Arts,Mathematics,Science,History / Social Studies,Physical Education & Health,Music,World Languages,Special Education",1,Other
+"English / Language Arts,Mathematics,Science,History / Social Studies,Physical Education & Health,Music,World Languages,Special Education,Career Technical Education,Technology",1,Other
+"English / Language Arts,Mathematics,Science,History / Social Studies,World Languages,Special Education,Other",1,Other
+"English / Language Arts,Mathematics,Science,Physical Education & Health",1,Other
+"English / Language Arts,Mathematics,Science,Special Education",1,Other
+"English / Language Arts,Mathematics,Special Education,Other",1,Other
+"English / Language Arts,Music,Fine Arts",1,Non-STEM
+"English / Language Arts,Special Education",1,Other
+"English / Language Arts,Special Education,Other",1,Other
+"English / Language Arts,Special Education,Technology",1,Other
+"Fine Arts,Other",1,Other
+"History / Social Studies,Special Education,Technology",1,Other
+"Mathematics,Other",1,Other
+"Mathematics,Science,History / Social Studies",1,STEM
+"Mathematics,Science,Technology",1,Other
+"Mathematics,Special Education,Technology",1,STEM
+"Mathematics,Technology",1,STEM
+"Music,Fine Arts",1,Non-STEM
+"Physical Education & Health,Technology",1,Other
+"Science,Special Education",1,Other
+"World Languages,Other",1,Other
