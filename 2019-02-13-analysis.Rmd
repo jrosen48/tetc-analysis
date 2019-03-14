@@ -25,7 +25,7 @@ library(tidyverse)
 library(ggridges)
 library(corrr)
 library(clipr)
-usethis::use_git_ignore("*.csv")
+library(apaTables)
 ```
 
 Read the data:
@@ -153,6 +153,7 @@ m <- read_csv("grade-levels-m.csv")
 m <- m %>% set_names(c("Q7", "Q7n", "Q7_code"))
 
 d <- d %>% left_join(m, by = "Q7")
+d %>% count(Q7_code)
 ```
 
 ```{r}
@@ -161,15 +162,13 @@ dm <- d %>%
     gather(key, val, -Q7_code)
 
 x <- aov(val ~ Q7_code*key, data = dm)
-library(apaTables)
 apa.aov.table(x)
 
 x
 TukeyHSD(x) %>% 
     pluck(1) %>% 
     as.data.frame() %>% 
-    rownames_to_column("comparison") %>% 
-    clipr::write_clip()
+    rownames_to_column("comparison")
 
 summary(aov(val ~ Q7_code*key, data = dm))
 
@@ -178,15 +177,16 @@ d %>%
     gather(key, val, -Q7_code) %>% 
     group_by(Q7_code) %>% 
     summarize(mean = mean(val, na.rm = TRUE),
-              sd = sd(val, na.rm = TRUE)) %>% 
-    ggplot(aes(x = reorder(Q7_code, mean), y = mean, ymin = mean - ((1.96*sd)/sqrt(336)), ymax = mean +((1.96*sd)/sqrt(336)))) +
-    geom_col() +
-    geom_errorbar() +
-    theme_bw() +
-    xlab("Grade Level") +
-    ylab("Mean TETC value")
+              sd = sd(val, na.rm = TRUE))
 
-ggsave("grade-plot-1.png", width = 6, height = 4)
+# ggplot(aes(x = reorder(Q7_code, mean), y = mean, ymin = mean - ((1.96*sd)/sqrt(336)), ymax = mean +((1.96*sd)/sqrt(336)))) +
+#     geom_col() +
+#     geom_errorbar() +
+#     theme_bw() +
+#     xlab("Grade Level") +
+#     ylab("Mean TETC value")
+# 
+# ggsave("grade-plot-1.png", width = 6, height = 4)
 ```
 
 ## Content area/subject
@@ -218,8 +218,7 @@ x
 TukeyHSD(x) %>% 
     pluck(1) %>% 
     as.data.frame() %>% 
-    rownames_to_column("comparison") %>% 
-    clipr::write_clip()
+    rownames_to_column("comparison")
 TukeyHSD(x)
 
 d %>% 
@@ -227,15 +226,16 @@ d %>%
     gather(key, val, -Q8_code) %>% 
     group_by(Q8_code) %>% 
     summarize(mean = mean(val, na.rm = TRUE),
-              sd = sd(val, na.rm = TRUE)) %>% 
-    ggplot(aes(x = reorder(Q8_code, mean), y = mean)) +
-    geom_col() +
-    geom_errorbar(aes(ymin = mean - ((1.96*sd)/sqrt(336)), ymax = mean +((1.96*sd)/sqrt(336)))) +
-    theme_bw() +
-    xlab("Subject") +
-    ylab("Mean TETC value")
+              sd = sd(val, na.rm = TRUE))
 
-ggsave("subject-plot.png", width = 6, height = 4)
+# ggplot(aes(x = reorder(Q8_code, mean), y = mean)) +
+#     geom_col() +
+#     geom_errorbar(aes(ymin = mean - ((1.96*sd)/sqrt(336)), ymax = mean +((1.96*sd)/sqrt(336)))) +
+#     theme_bw() +
+#     xlab("Subject") +
+#     ylab("Mean TETC value")
+# 
+# ggsave("subject-plot.png", width = 6, height = 4)
 ```
 
 # Joining data - this is to join the qualitative data (not run right now)
@@ -277,6 +277,17 @@ c13 <- dx %>%
     select(v1:v12) %>% 
     slice(13:24)
 
+c13p <- dx %>% 
+    select(v1:v12, `Q13-1`:`Q13-12`) %>% 
+    mutate_all(replace_na, 0) %>% 
+    as.matrix() %>% 
+    Hmisc::rcorr() %>% 
+    pluck(3) %>% 
+    as.data.frame() %>% 
+    slice() %>% 
+    select(v1:v12) %>% 
+    slice(13:24)
+
 c14 <- dx %>% 
     select(v1:v12, `Q14-1`:`Q14-12`) %>% 
     mutate_if(is.character, as.numeric) %>% 
@@ -287,9 +298,23 @@ c14 <- dx %>%
     select(v1:v12) %>% 
     slice(13:24)
 
+c14p <- dx %>% 
+    select(v1:v12, `Q14-1`:`Q14-12`) %>% 
+    mutate_all(replace_na, 0) %>% 
+    as.matrix() %>% 
+    Hmisc::rcorr() %>% 
+    pluck(3) %>% 
+    as.data.frame() %>% 
+    slice() %>% 
+    select(v1:v12) %>% 
+    slice(13:24)
+
 dd <- data.frame(var = str_c("TETC", 1:12),
                  most_imp_r = as.numeric(diag(as.matrix(c13))),
-                 least_imp_r = as.numeric(diag(as.matrix(c14))))
+                 most_imp_r_p = as.numeric(diag(as.matrix(c13p))),
+                 least_imp_r = as.numeric(diag(as.matrix(c14))),
+                 least_imp_r_p = as.numeric(diag(as.matrix(c14p)))
+                 )
 
 write_csv(dd, "most-least-imp-corr.csv")
 ```
