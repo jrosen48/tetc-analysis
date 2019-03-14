@@ -1,14 +1,14 @@
 Q8,nn,code
 NA,47,Other
-Technology,36,STEM
+Technology,36,Technology
 Science,34,STEM
 Other,32,Other
 English / Language Arts,31,Non-STEM
 History / Social Studies,21,Non-STEM
-Special Education,21,Special Education
+Special Education,21,Non-STEM
 Mathematics,17,STEM
 "Mathematics,Science",7,STEM
-"Technology,Other",6,STEM
+"Technology,Other",6,Technology
 Career Technical Education,4,STEM
 Music,4,Non-STEM
 "Science,Technology",4,STEM
@@ -17,7 +17,7 @@ Music,4,Non-STEM
 "English / Language Arts,Technology,Other",3,Non-STEM
 Physical Education & Health,3,Non-STEM
 "Science,Other",3,STEM
-"Special Education,Other",3,Special Education
+"Special Education,Other",3,Non-STEM
 "English / Language Arts,Mathematics,Science,History / Social Studies,Physical Education & Health",2,Other
 "English / Language Arts,Mathematics,Science,History / Social Studies,World Languages",2,Other
 "English / Language Arts,Technology",2,Other
