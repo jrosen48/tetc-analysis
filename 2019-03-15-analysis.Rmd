@@ -250,8 +250,6 @@ c <- cbind(dd[, 1:12])
 m <- manova(as.matrix(c) ~ dd$Q7_code)
 summary(m)
 
-library(broom)
-
 d %>% 
     select(v1:v12) %>% 
     map(~ aov(. ~ d$Q7_code)) %>% 
@@ -273,9 +271,7 @@ d %>%
                                  ifelse(adj.p.value < .05, str_c(estimate, "*"), estimate)))) %>%     select(var, comparison, est_p) %>% 
     spread(comparison, est_p) %>%
     write_csv("grade-tukey.csv")
-```
 
-```{r}
 dm <- d %>% 
     select(Q7_code, v1:v12) %>% 
     gather(key, val, -Q7_code)
@@ -327,9 +323,7 @@ m <- read_csv("subject-m.csv")
 m <- m %>% set_names(c("Q8", "Q8n", "Q8_code")) %>% mutate(Q8_code = ifelse(Q8_code == "STEM", "Science and Math", Q8_code))
 
 d <- d %>% left_join(m, by = "Q8")
-```
 
-```{r}
 dd <- d %>% select(v1:v12, Q8_code)
 c <- cbind(dd[, 1:12])
 m <- manova(as.matrix(c) ~ dd$Q8_code)
@@ -359,9 +353,6 @@ d %>%
     spread(comparison, est_p) %>%
     write_csv("subject-tukey.csv")
 
-```
-
-```{r}
 dm <- d %>% 
     select(Q8_code, v1:v12) %>% 
     gather(key, val, -Q8_code)
