@@ -73,6 +73,19 @@ g <- ds %>%
     gather(key, val)
 
 summary(aov(val ~ key, g))
+
+ds %>% 
+    set_names(str_c("TETC", 1:12)) %>% 
+    corrr::correlate() %>% 
+    corrr::shave() %>% 
+    corrr::fashion() %>% 
+    write_csv("TETC-corrs.csv")
+
+ds %>% 
+    set_names(str_c("TETC", 1:12)) %>% 
+    as.matrix() %>% 
+    Hmisc::rcorr() %>% 
+    pluck(3)
 ```
 
 # Demographics
@@ -463,7 +476,7 @@ dd <- data.frame(var = str_c("TETC", 1:12),
                  most_imp_r_p = as.numeric(diag(as.matrix(c13p))),
                  least_imp_r = as.numeric(diag(as.matrix(c14))),
                  least_imp_r_p = as.numeric(diag(as.matrix(c14p)))
-                 )
+)
 
 write_csv(dd, "most-least-imp-corr.csv")
 ```

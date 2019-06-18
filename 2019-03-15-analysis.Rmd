@@ -61,8 +61,8 @@ ds %>%
            TETC = as.integer(TETC)) %>% 
     arrange(TETC) %>% 
     mutate(TETC = str_c("TETC", TETC)) %>% 
-    mutate(mean = round(mean, 3),
-           sd = round(sd, 3)) %>% 
+    mutate(mean = round(mean, 2),
+           sd = round(sd, 2)) %>% 
     mutate(mean_sd = str_c(mean, " (", sd, ")")) %>% 
     select(mean_sd) %>% 
     clipr::write_clip()
@@ -74,6 +74,64 @@ g <- ds %>%
 
 summary(aov(val ~ key, g))
 ```
+
+```{r}
+rec_f <- function(x) {
+    recode(x, 
+           `Major asset I experience / have experienced.` = 5,
+           `Asset I experience / have experienced.` = 4,
+           `Neutral / neither a barrier nor an asset.` = 3,
+           `Barrier I experience / have experienced.` = 2,
+           `Major barrier I experience / have experienced.` = 1
+           )
+}
+    
+dd <- d %>% 
+    select(Q18_1:Q18_9) %>% 
+    mutate_all(rec_f)
+
+
+ddd <- dd %>% 
+    gather(key, val) %>% 
+    mutate(key = str_replace(key, "v", "Asset/Barier")) %>% 
+    group_by(key) %>% 
+    summarize(mean_val = mean(val, na.rm = TRUE),
+              sd_val = sd(val, na.rm = TRUE)) %>% 
+    arrange(desc(mean_val))
+
+dd %>% 
+    gather(key, val) %>% 
+    ggplot() +
+    geom_jitter(aes(x = key, y = val), 
+                alpha = .5, 
+                color = "gray", 
+                height = 0.2) +
+    geom_point(data = ddd,
+               aes(x = key, y = mean_val),
+               size = 2.5) +
+    geom_errorbar(data = ddd,
+                  aes(x = key, y = mean_val,
+                      ymin = mean_val-sd_val,
+                      ymax = mean_val+sd_val)) +
+    theme_bw() +
+    ylab("Value") +
+    xlab(NULL) +
+    theme(text = element_text(size = 14),
+          axis.text.x = element_text(angle = 45, hjust = 1))
+
+ggsave('assets-barriers-plot.png', width = 8, height = 6)
+```
+```
+
+Access to educational technologies (1)
+Time to try out and use educational technologies  (2)
+Technical and instructional design support to use educational technologies (3)
+Leadership around my department / program’s use of educational technology (4)
+A clear vision or plan related to my department / program’s use of educational technology (5)
+The role of technology in the subject matter(s) I focus on (6)
+My beliefs about the role of educational technologies in teaching and learning (7)
+Confidence in my ability to use educational technology (8)
+Confidence in my ability to integrate educational technologies with my own pedagogical strategies (9)
 
 # Demographics
 
