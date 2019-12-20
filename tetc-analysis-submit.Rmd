@@ -186,7 +186,6 @@ data.frame(v1 = str_c(round(rs$years_tch_exp,2), ps$years_tch_exp),
            v2 = str_c(round(rs$years_te_experience,2), ps$years_te_experience))
 ```
 
-
 ## Grade level
 
 ```{r}
@@ -207,8 +206,8 @@ summary(m)
 
 d %>% 
     select(v1:v12) %>% 
-    map(~ aov(. ~ d$Q7_code)) %>% 
-    map_df(tidy) %>% 
+    purrr::map(~ aov(. ~ d$Q7_code)) %>% 
+    purrr::map_df(tidy) %>% 
     filter(term != "Residuals") %>% 
     mutate(var = str_c("v", 1:12)) %>% 
     select(var, sumsq, statistic, p.value) %>% 
@@ -216,9 +215,9 @@ d %>%
 
 d %>% 
     select(v1:v12) %>% 
-    map(~ aov(. ~ d$Q7_code)) %>% 
-    map(TukeyHSD) %>% 
-    map_df(tidy) %>% 
+    purrr::map(~ aov(. ~ d$Q7_code)) %>% 
+    purrr::map(TukeyHSD) %>% 
+    purrr::map_df(tidy) %>% 
     mutate(var = rep(1:12, each = 6)) %>% 
     mutate_if(is.numeric, round, 3) %>% 
     mutate(est_p = ifelse(adj.p.value < .001, str_c(estimate, "***"),
@@ -232,6 +231,9 @@ dm <- d %>%
     gather(key, val, -Q7_code)
 
 x <- aov(val ~ Q7_code, data = dm)
+summary(x)
+
+lme4::lmer(val ~ Q7_code, data = dm)
 
 TukeyHSD(x) %>% 
     pluck(1) %>% 

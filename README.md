@@ -1,1 +1,0 @@
-# tetc-analysis

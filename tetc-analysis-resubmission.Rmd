@@ -1,0 +1,277 @@
+---
+title: "TETC Analysis Resubmission"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Loading, setting up
+
+In this section, we start out by doing:
+
+```{r, load-packages, message = FALSE}
+library(tidyverse)
+library(corrr)
+library(broom)
+library(patchwork) # devtools::install_github("thomasp85/patchwork")
+library(psych)
+library(apaTables)
+library(nFactors)
+library(DTK)
+
+usethis::use_git_ignore("*.csv")
+```
+
+Read the data:
+
+```{r, load-data, eval = TRUE}
+d <- read_csv("full-tetcs-dataset.csv")
+d <- d %>% slice(-c(1:2))
+# add row name ID
+d$id <- 1:nrow(d)
+```
+
+Check that the data loaded:
+
+```{r, check-that-data-loaded, eval = FALSE}
+d
+```
+
+# Merge grade data
+
+```{r}
+s <- read_csv("grade-levels-m.csv")
+
+d <- d  %>% 
+    left_join(s, by = "Q7") %>% 
+    rename(Q7_code = code)
+```
+
+# Merge subject data
+
+```{r}
+s <- read_csv("subject-m.csv")
+
+d <- d  %>% 
+    left_join(s, by = "Q8") %>% 
+    rename(Q8_code = code)
+```
+
+# Process the TETCs variables
+
+```{r}
+d <- d %>% 
+    dplyr::rename(v1 = Q11_1,
+                  v2 = Q11_2,
+                  v3 = Q11_3,
+                  v4 = Q11_4,
+                  v5 = Q11_5,
+                  v6 = Q11_6,
+                  v7 = Q11_7,
+                  v8 = Q11_8,
+                  v9 = Q11_9,
+                  v10 = Q11_10,
+                  v11 = Q11_11,
+                  v12 = Q11_12)
+
+d <- d %>% 
+    mutate_at(vars(v1:v12), str_extract, "\\(?[0-9,.]+\\)?") %>% 
+    mutate_at(vars(v1:v12), as.integer)
+
+# joining composite
+tetc_composite_var <- d %>% 
+    dplyr::select(id, v1:v12) %>% 
+    gather(key, val, -id) %>% 
+    group_by(id) %>% 
+    summarize(tetc_composite = mean(val))
+
+d <- d %>% 
+    left_join(tetc_composite_var)
+
+# removing one person who didn't respond to TETC items
+d <- d %>% 
+    filter(!is.na(tetc_composite))
+```
+
+# For the descriptives
+
+```{r}
+d %>%
+    dplyr::select(v1:v12) %>%
+    summarize_all(funs(mean, sd), na.rm = TRUE) %>%
+    gather(key, val) %>%
+    separate(key, into = c("var", "stat")) %>%
+    spread(stat, val) %>%
+    mutate(TETC = str_sub(var, start = 2),
+           TETC = as.integer(TETC)) %>%
+    arrange(TETC) %>%
+    mutate(TETC = str_c("TETC", TETC)) %>%
+    mutate(mean = round(mean, 3),
+           sd = round(sd, 3)) %>%
+    mutate(mean_sd = str_c(mean, " (", sd, ")")) %>%
+    dplyr::select(mean_sd) %>%
+    write_csv("tetc-item-descriptives.csv")
+
+```
+
+# Correlations among TETCs
+
+```{r}
+
+d %>% 
+    dplyr::select(v1:v12) %>% 
+    set_names(str_c("TETC", 1:12)) %>% 
+    corrr::correlate() %>% 
+    corrr::shave() %>% 
+    corrr::fashion() %>% 
+    write_csv("TETC-corrs.csv")
+
+# p-values for the correlations
+d %>% 
+    dplyr::select(v1:v12) %>% 
+    as.matrix() %>% 
+    Hmisc::rcorr() %>% 
+    pluck(3)
+```
+
+# Factor analysis
+
+```{r}
+ds <- d %>% 
+    dplyr::select(v1:v12)
+
+f <- function(d) {
+    ev <- eigen(cor(d)) # get eigenvalues
+    ap <- parallel(subject=nrow(d),var=ncol(d),
+                   rep=100,cent=.05)
+    nS <- nScree(x=ev$values, aparallel=ap$eigen$qevpea)
+    plotnScree(nS)
+}
+
+# this is for the parallel analysis
+f(ds[complete.cases(ds), ])
+
+# loadings
+o1 <- fa(ds, nfactors = 1)
+
+tibble(Item = str_c("TETC ", 1:12), Loading = as.vector(o1$loadings)) %>%
+    mutate(Loading = round(Loading, 2)) %>%
+    write_csv("tetc-loadings.csv")
+
+# scree plot
+tibble(n = 1:length(o1$e.values),
+       eigenvalues = o1$e.values) %>% 
+    ggplot(aes(x = n, y = eigenvalues)) +
+    geom_point() +
+    geom_line() +
+    geom_hline(yintercept = 1, linetype = 'dashed') +
+    theme_bw() +
+    scale_x_discrete(limit = 1:12) +
+    xlab("factor")
+
+ggsave("scree.png", width = 6, height = 4)
+```
+
+# Descriptives of pre- and in-service teachers
+
+```{r}
+d %>% 
+    mutate(pre_service = str_detect(Q3, "Pre"),
+           in_service = str_detect(Q3, "In")) %>% 
+    count(pre_service, in_service) %>% 
+    mutate(prop = n/sum(n)) %>% 
+    arrange(desc(prop))
+```
+
+# Grade
+
+```{r}
+d  %>%
+    count(Q7) %>%
+    arrange(desc(n))%>%
+    write_csv("grade-levels.csv")
+
+grade_aov <- aov(tetc_composite ~ Q7_code, data = d)
+summary(grade_aov)
+apa.aov.table(grade_aov)
+
+TukeyHSD(grade_aov) %>% 
+    pluck(1) %>% 
+    as.data.frame() %>% 
+    rownames_to_column("comparison")
+
+TukeyHSD(grade_aov)
+
+# same diffs are diff from zero
+DTK::DTK.test(x = d$tetc_composite, 
+              f = d$Q7_code)
+
+# for mean values and sd
+grade_desc <- d %>% 
+    dplyr::select(Q7_code, v1:v12) %>% 
+    gather(key, val, -Q7_code) %>% 
+    group_by(Q7_code) %>% 
+    summarize(mean = mean(val, na.rm = TRUE),
+              sd = sd(val, na.rm = TRUE))
+
+grade_plot <- grade_desc %>% 
+    ggplot(aes(x = reorder(Q7_code, mean), y = mean, ymin = mean - ((1.96*sd)/sqrt(336)), ymax = mean +((1.96*sd)/sqrt(336)))) +
+    geom_col() +
+    geom_errorbar() +
+    theme_bw() +
+    xlab("Grade Level") +
+    ylab("Mean TETC value")
+
+grade_plot 
+
+ggsave("grade-plot-1.png", width = 6, height = 4)
+```
+
+## Subject
+
+```{r}
+d %>%
+    count(Q8_code) %>% 
+    arrange(desc(n)) %>% 
+    write_csv("subject.csv")
+
+d_for_subject <- d %>% 
+    filter(!is.na(Q8_code))
+
+subject_aov <- aov(tetc_composite ~ Q8_code, data = d_for_subject)
+summary(subject_aov)
+apa.aov.table(subject_aov)
+
+TukeyHSD(subject_aov) %>% 
+    pluck(1) %>% 
+    as.data.frame() %>% 
+    rownames_to_column("comparison")
+
+TukeyHSD(subject_aov)
+
+# same diffs are diff from zero
+DTK::DTK.test(x = d_for_subject$tetc_composite, 
+              f = d_for_subject$Q8_code)
+
+# for mean values
+subject_desc <- d %>% 
+    dplyr::select(Q8_code, v1:v12) %>% 
+    gather(key, val, -Q8_code) %>% 
+    group_by(Q8_code) %>% 
+    summarize(mean = mean(val, na.rm = TRUE),
+              sd = sd(val, na.rm = TRUE))
+
+subject_plot <- subject_desc %>% 
+    ggplot(aes(x = reorder(Q8_code, mean), y = mean, ymin = mean - ((1.96*sd)/sqrt(336)), ymax = mean +((1.96*sd)/sqrt(336)))) +
+    geom_col() +
+    geom_errorbar() +
+    theme_bw() +
+    xlab("Subject") +
+    ylab("Mean TETC value")
+
+subject_plot
+
+ggsave("subject-plot-1.png", width = 6, height = 4)
+```

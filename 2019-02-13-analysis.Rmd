@@ -253,7 +253,7 @@ m <- m %>% set_names(c("Q7", "Q7n", "Q7_code"))
 
 d <- d %>% left_join(m, by = "Q7")
 
-dd <- d %>% select(v1:v12, Q7_code)
+dd <- d %>% dplyr::select(v1:v12, Q7_code)
 c <- cbind(dd[, 1:12])
 m <- manova(as.matrix(c) ~ dd$Q7_code)
 summary(m)
@@ -281,7 +281,6 @@ d %>%
                                  ifelse(adj.p.value < .05, str_c(estimate, "*"), estimate)))) %>%     select(var, comparison, est_p) %>% 
     spread(comparison, est_p) %>%
     write_csv("grade-tukey.csv")
->>>>>>> 1cfac40cb9615de45ed3be061f58bb951c4847a9
 ```
 
 ```{r}
@@ -401,21 +400,22 @@ d %>%
 
 ```{r, eval = FALSE}
 library(googlesheets)
-g <- gs_title("Teacher Education Technology Competencies Survey_November 12, 2018_20.32")
+g <- gs_title("Copy of Teacher Education Technology Competencies Survey_November 12, 2018")
 ```
 
 ```{r}
-d2 <- gs_read(g, ws = 2, skip = 1)
+#d2 <- gs_read(g, ws = 2, skip = 1)
+d2 <- readxl::read_excel("qual-coding.xlsx", sheet = 2, skip = 1)
 d2 <- d2 %>% rename(Q13 = `Please explain the one or two technology competencies that you consider as being most important to your individual work as a teacher educator.`) %>% slice(-c(338:339))
 d2 <- d2 %>% set_names(c("Q13", str_c("Q13-", names(d2)[-1])))
 d2 <- d2 %>% filter(!duplicated(Q13))
 
-d3 <- gs_read(g, ws = 3, skip = 1)
+d3 <- readxl::read_excel("qual-coding.xlsx", sheet = 3, skip = 1)
 d3 <- d3 %>% rename(Q14 = `Please explain one or more of the technology competencies that you consider of low or no importance to your individual work as a teacher educator.`) %>% slice(-c(338:339))
 d3 <- d3 %>% set_names(c("Q14", str_c("Q14-", names(d3)[-1])))
 d3 <- d3 %>% filter(!duplicated(Q14))
 
-d4 <- gs_read(g, ws = 4, skip = 1)
+d4 <- readxl::read_excel("qual-coding.xlsx", sheet = 4, skip = 1)
 d4 <- d4 %>% rename(Q15 = `What is important in your work related to educational technology that is not reflected in the TETCs?`) %>% slice(-c(338:339))
 d4 <- d4 %>% set_names(c("Q15", str_c("Q15-", names(d4)[-1])))
 d4 <- d4 %>% filter(!duplicated(Q15))
@@ -428,7 +428,7 @@ dx <- d %>%
     left_join(d4)
 
 c13 <- dx %>% 
-    select(v1:v12, `Q13-1`:`Q13-12`) %>% 
+    dplyr::select(v1:v12, `Q13-1.0`:`Q13-12.0`) %>% 
     mutate_all(replace_na, 0) %>% 
     corrr::correlate() %>% 
     slice() %>% 
@@ -479,4 +479,8 @@ dd <- data.frame(var = str_c("TETC", 1:12),
 )
 
 write_csv(dd, "most-least-imp-corr.csv")
+```
+
+```{r}
+
 ```

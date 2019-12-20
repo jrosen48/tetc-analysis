@@ -25,7 +25,7 @@ library(tidyverse)
 library(ggridges)
 library(corrr)
 library(clipr)
-usethis::use_git_ignore("*.csv")
+library(apaTables)
 ```
 
 Read the data:
@@ -46,7 +46,7 @@ Process the TETCs variables:
 
 ```{r}
 ds <- d %>% 
-    select(Q11_1:Q11_12) %>% 
+    dplyr::select(Q11_1:Q11_12) %>% 
     set_names(1:12) %>% 
     mutate_all(str_extract, "\\(?[0-9,.]+\\)?") %>% 
     mutate_all(as.integer) %>% 
@@ -64,7 +64,7 @@ ds %>%
     mutate(mean = round(mean, 3),
            sd = round(sd, 3)) %>% 
     mutate(mean_sd = str_c(mean, " (", sd, ")")) %>% 
-    select(mean_sd) %>% 
+    dplyr::select(mean_sd) %>% 
     clipr::write_clip()
 
 c <- cbind(ds)
@@ -73,6 +73,19 @@ g <- ds %>%
     gather(key, val)
 
 summary(aov(val ~ key, g))
+
+ds %>% 
+    set_names(str_c("TETC", 1:12)) %>% 
+    corrr::correlate() %>% 
+    corrr::shave() %>% 
+    corrr::fashion() %>% 
+    write_csv("TETC-corrs.csv")
+
+ds %>% 
+    set_names(str_c("TETC", 1:12)) %>% 
+    as.matrix() %>% 
+    Hmisc::rcorr() %>% 
+    pluck(3)
 ```
 
 # Demographics
@@ -86,31 +99,31 @@ d <-d %>%
     bind_cols(ds)
 
 ps <- d %>% 
-    select(years_teach_exp = Q5_1, 
+    dplyr::select(years_teach_exp = Q5_1, 
            yeras_te_exp = Q5_2,
            v1:v12) %>% 
     as.matrix() %>% 
     Hmisc::rcorr() %>% 
     pluck(3) %>% 
     as.data.frame() %>% 
-    select(1:2) %>% 
+    dplyr::select(1:2) %>% 
     slice(3:nrow(.)) %>% 
     unlist() %>% 
     p.adjust(method = "hochberg") %>% 
     matrix(ncol = 2) %>% 
     as_tibble() %>%
-    set_names(c("years_tch_exp", "years_te_experience"))
+    set_names(c("years_tch_exp", "years_te_experience")) %>% 
     mutate_all(~ ifelse(. < .05, "*", ""))
 
 rs <- d %>% 
-    select(years_teach_exp = Q5_1, 
+    dplyr::select(years_teach_exp = Q5_1, 
            yeras_te_exp = Q5_2,
            v1:v12) %>% 
     as.matrix() %>% 
     Hmisc::rcorr() %>% 
     pluck(1) %>% 
     as.data.frame() %>% 
-    select(1:2) %>% 
+    dplyr::select(1:2) %>% 
     slice(3:14) %>% 
     set_names(c("years_tch_exp", "years_te_experience"))
 
@@ -119,7 +132,7 @@ data.frame(v1 = str_c(round(rs$years_tch_exp,2), ps$years_tch_exp),
     clipr::write_clip()
 
 cs <- d %>% 
-    select(years_teach_exp = Q5_1, 
+    dplyr::select(years_teach_exp = Q5_1, 
            yeras_te_exp = Q5_2,
            v1:v12) %>% 
     corrr::correlate() %>% 
@@ -127,13 +140,10 @@ cs <- d %>%
     corrr::fashion()
 
 dcc <- d %>% 
-    select(years_teach_exp = Q5_1, 
+    dplyr::select(years_teach_exp = Q5_1, 
            yeras_te_exp = Q5_2,
            v1:v12)
 
-```
-
-```{r, eval=F}
 library(CCA)
 library(CCP)
 
@@ -192,7 +202,6 @@ dss %>%
     xlab(NULL) +
     xlim(1, 5)
 ```
-
 ```{r}
 summary(aov(val~key, data = dss))
 ```
@@ -201,7 +210,8 @@ summary(aov(val~key, data = dss))
 # fit1 = hotelling.test(. ~ is_sync, data = ds)
 # fit1
 
-#str_c(round(mean(dd$val, na.rm = TRUE), 3), " (", round(sd(dd$val, na.rm = TRUE), 3), ")")
+str_c(round(mean(dd$val, na.rm = TRUE), 3), " (", round(sd(dd$val, na.rm = TRUE), 3), ")")
+summary(aov(val ~ key, data = dd))
 
 dd <- ds %>% 
     gather(key, val) %>% 
@@ -218,16 +228,14 @@ d <- ds %>%
 
 d %>% 
     ggplot() +
-    geom_jitter(data = dd, aes(x = reorder(key, val), y = val), alpha = .5, color = "gray", height = 0.2) +
+    geom_jitter(data = dd, aes(x = reorder(key, val), y = val), alpha = .5, color = "gray") +
     geom_point(aes(x = reorder(key, mean_val), y = mean_val), size = 2.5) +
     geom_errorbar(aes(x = reorder(key, mean_val),
                       ymin = mean_val-sd_val,
                       ymax = mean_val+sd_val)) +
     theme_bw() +
     ylab("Value") +
-    xlab(NULL) +
-    theme(text = element_text(size = 14),
-          axis.text.x = element_text(angle = 45, hjust = 1))
+    xlab(NULL)
 
 ggsave('tetc-plot.png', width = 8, height = 6)
 ```
@@ -245,7 +253,7 @@ m <- m %>% set_names(c("Q7", "Q7n", "Q7_code"))
 
 d <- d %>% left_join(m, by = "Q7")
 
-dd <- d %>% select(v1:v12, Q7_code)
+dd <- d %>% dplyr::select(v1:v12, Q7_code)
 c <- cbind(dd[, 1:12])
 m <- manova(as.matrix(c) ~ dd$Q7_code)
 summary(m)
@@ -253,16 +261,16 @@ summary(m)
 library(broom)
 
 d %>% 
-    select(v1:v12) %>% 
+    dplyr::select(v1:v12) %>% 
     map(~ aov(. ~ d$Q7_code)) %>% 
     map_df(tidy) %>% 
     filter(term != "Residuals") %>% 
     mutate(var = str_c("v", 1:12)) %>% 
-    select(var, sumsq, statistic, p.value) %>% 
+    dplyr::select(var, sumsq, statistic, p.value) %>% 
     mutate(p.value_adj = p.adjust(p.value, method = "hochberg"))
 
 d %>% 
-    select(v1:v12) %>% 
+    dplyr::select(v1:v12) %>% 
     map(~ aov(. ~ d$Q7_code)) %>% 
     map(TukeyHSD) %>% 
     map_df(tidy) %>% 
@@ -270,49 +278,43 @@ d %>%
     mutate_if(is.numeric, round, 3) %>% 
     mutate(est_p = ifelse(adj.p.value < .001, str_c(estimate, "***"),
                           ifelse(adj.p.value < .01, str_c(estimate, "**"),
-                                 ifelse(adj.p.value < .05, str_c(estimate, "*"), estimate)))) %>%     select(var, comparison, est_p) %>% 
+                                 ifelse(adj.p.value < .05, str_c(estimate, "*"), estimate)))) %>%     dplyr::select(var, comparison, est_p) %>% 
     spread(comparison, est_p) %>%
     write_csv("grade-tukey.csv")
+
 ```
 
 ```{r}
 dm <- d %>% 
-    select(Q7_code, v1:v12) %>% 
+    dplyr::select(Q7_code, v1:v12) %>% 
     gather(key, val, -Q7_code)
 
-x <- aov(val ~ Q7_code, data = dm)
+x <- aov(val ~ Q7_code*key, data = dm)
+apa.aov.table(x)
 
+x
 TukeyHSD(x) %>% 
     pluck(1) %>% 
     as.data.frame() %>% 
-    rownames_to_column("comparison") %>% 
-    mutate_if(is.numeric, round, 3)
-    clipr::write_clip()
+    rownames_to_column("comparison")
 
 summary(aov(val ~ Q7_code*key, data = dm))
 
-sg <- d %>% 
-    select(Q7_code, v1:v12) %>% 
+d %>% 
+    dplyr::select(Q7_code, v1:v12) %>% 
     gather(key, val, -Q7_code) %>% 
     group_by(Q7_code) %>% 
     summarize(mean = mean(val, na.rm = TRUE),
-              sd = sd(val, na.rm = TRUE)) %>% 
-    ggplot(aes(x = reorder(Q7_code, mean), y = mean, ymin = mean - ((1.96*sd)/sqrt(336)), ymax = mean +((1.96*sd)/sqrt(336)))) +
-    geom_col() +
-    geom_errorbar() +
-    theme_bw() +
-    xlab("Grade Level") +
-    ylab("Mean TETC value") +
-    theme(text = element_text(size = 14)) +
-    scale_x_discrete(labels = c("Elementary (n = 58)", 
-                                "Secondary (n = 76)",
-                                "Other (n = 47)",
-                                "All (n = 156)")) +
-    xlab(NULL) + coord_flip()
+              sd = sd(val, na.rm = TRUE))
 
-sg
-
-ggsave("grade-plot-1.png", width = 6, height = 5)
+# ggplot(aes(x = reorder(Q7_code, mean), y = mean, ymin = mean - ((1.96*sd)/sqrt(336)), ymax = mean +((1.96*sd)/sqrt(336)))) +
+#     geom_col() +
+#     geom_errorbar() +
+#     theme_bw() +
+#     xlab("Grade Level") +
+#     ylab("Mean TETC value")
+# 
+# ggsave("grade-plot-1.png", width = 6, height = 4)
 ```
 
 ## Content area/subject
@@ -330,23 +332,23 @@ d <- d %>% left_join(m, by = "Q8")
 ```
 
 ```{r}
-dd <- d %>% select(v1:v12, Q8_code)
+dd <- d %>% dplyr::select(v1:v12, Q8_code)
 c <- cbind(dd[, 1:12])
 m <- manova(as.matrix(c) ~ dd$Q8_code)
 summary(m)
 
 d %>% 
-    select(v1:v12) %>% 
+    dplyr::select(v1:v12) %>% 
     map(~ aov(. ~ d$Q8_code)) %>% 
     map_df(tidy) %>% 
     filter(term != "Residuals") %>% 
     mutate(var = str_c("v", 1:12)) %>% 
-    select(var, sumsq, statistic, p.value) %>% 
+    dplyr::select(var, sumsq, statistic, p.value) %>% 
     mutate(p.value_adj = p.adjust(p.value, method = "hochberg")) %>% 
     mutate_if(is.numeric, round, 3)
 
 d %>% 
-    select(v1:v12) %>% 
+    dplyr::select(v1:v12) %>% 
     map(~ aov(. ~ d$Q8_code)) %>% 
     map(TukeyHSD) %>% 
     map_df(tidy) %>% 
@@ -355,64 +357,51 @@ d %>%
     mutate(est_p = ifelse(adj.p.value < .001, str_c(estimate, "***"),
                           ifelse(adj.p.value < .01, str_c(estimate, "**"),
                                  ifelse(adj.p.value < .05, str_c(estimate, "*"), estimate)))) %>% 
-    select(var, comparison, est_p) %>% 
+    dplyr::select(var, comparison, est_p) %>% 
     spread(comparison, est_p) %>%
     write_csv("subject-tukey.csv")
-
 ```
 
 ```{r}
 dm <- d %>% 
-    select(Q8_code, v1:v12) %>% 
+    dplyr::select(Q8_code, v1:v12) %>% 
     gather(key, val, -Q8_code)
 
-x <- aov(val ~ Q8_code, data = dm)
-summary(aov(val ~ Q8_code, data = dm))
+aov(val ~ Q8_code*key, data = dm)
+summary(aov(val ~ Q8_code*key, data = dm))
+x <- aov(val ~ Q8_code*key, data = dm)
 
+apa.aov.table(x, "subject.doc")
+
+x
 TukeyHSD(x) %>% 
     pluck(1) %>% 
     as.data.frame() %>% 
     rownames_to_column("comparison")
-
 TukeyHSD(x)
 
-dm %>% group_by(Q8_code) %>% summarize(mean_val = mean(val, na.rm = T), sd_val = sd(val, na.rm = TRUE))
-
-sp <- d %>% 
-    select(Q8_code, v1:v12) %>% 
-    filter(!is.na(Q8_code)) %>% 
+d %>% 
+    dplyr::select(Q8_code, v1:v12) %>% 
     gather(key, val, -Q8_code) %>% 
     group_by(Q8_code) %>% 
     summarize(mean = mean(val, na.rm = TRUE),
-              sd = sd(val, na.rm = TRUE)) %>% 
-    ggplot(aes(x = reorder(Q8_code, mean), y = mean)) +
-    geom_col() +
-    geom_errorbar(aes(ymin = mean - ((1.96*sd)/sqrt(336)), ymax = mean +((1.96*sd)/sqrt(336)))) +
-    theme_bw() +
-    xlab("Subject") +
-    ylab("Mean TETC value") +
-    theme(text = element_text(size = 14)) +
-    scale_x_discrete(labels = c("Non Science & Math (n = 97)", 
-                                "Science & Math (n = 73)",
-                                "Other (n = 78)",
-                                "Technology (n = 42)")) +
-    xlab(NULL) + coord_flip()
+              sd = sd(val, na.rm = TRUE))
 
-sp
-
-ggsave("subject-plot.png", width = 7, height = 5)
-```
-
-```{r}
-cowplot::plot_grid(sg, sp)
-ggsave("sg-sp.png", width = 10, height = 6) 
+# ggplot(aes(x = reorder(Q8_code, mean), y = mean)) +
+#     geom_col() +
+#     geom_errorbar(aes(ymin = mean - ((1.96*sd)/sqrt(336)), ymax = mean +((1.96*sd)/sqrt(336)))) +
+#     theme_bw() +
+#     xlab("Subject") +
+#     ylab("Mean TETC value")
+# 
+# ggsave("subject-plot.png", width = 6, height = 4)
 ```
 
 # Joining data - this is to join the qualitative data (not run right now)
 
-```{r, eval = FALSE}
+```{r, eval = TRUE}
 library(googlesheets)
-g <- gs_title("Teacher Education Technology Competencies Survey_November 12, 2018_20.32")
+g <- gs_title("Copy of Teacher Education Technology Competencies Survey_November 12, 2018")
 ```
 
 ```{r}
@@ -439,30 +428,59 @@ dx <- d %>%
     left_join(d4)
 
 c13 <- dx %>% 
-    select(v1:v12, `Q13-1`:`Q13-12`) %>% 
+    dplyr::select(v1:v12, `Q13-1`:`Q13-12`) %>% 
+    mutate(TETC = )
     mutate_all(replace_na, 0) %>% 
     corrr::correlate() %>% 
     slice() %>% 
     fashion() %>% 
-    select(v1:v12) %>% 
+    dplyr::select(v1:v12) %>% 
+    slice(13:24)
+
+c13p <- dx %>% 
+    dplyr::select(v1:v12, `Q13-1`:`Q13-12`) %>% 
+    mutate_all(replace_na, 0) %>% 
+    as.matrix() %>% 
+    Hmisc::rcorr() %>% 
+    pluck(3) %>% 
+    as.data.frame() %>% 
+    slice() %>% 
+    dplyr::select(v1:v12) %>% 
     slice(13:24)
 
 c14 <- dx %>% 
-    select(v1:v12, `Q14-1`:`Q14-12`) %>% 
+    dplyr::select(v1:v12, `Q14-1`:`Q14-12`) %>% 
     mutate_if(is.character, as.numeric) %>% 
     mutate_all(replace_na, 0) %>% 
     as.matrix() %>% 
     Hmisc::rcorr() %>% 
-    as.matrix() %>% 
-    # corrr::correlate() %>% 
+    pluck(3) %>% 
+    as.data.frame() %>% 
     slice() %>% 
-    fashion() %>% 
-    select(v1:v12) %>% 
+    dplyr::select(v1:v12) %>% 
+    slice(13:24)
+
+c14p <- dx %>% 
+    dplyr::select(v1:v12, `Q14-1`:`Q14-12`) %>% 
+    mutate_all(replace_na, 0) %>% 
+    as.matrix() %>% 
+    Hmisc::rcorr() %>% 
+    pluck(3) %>% 
+    as.data.frame() %>% 
+    slice() %>% 
+    dplyr::select(v1:v12) %>% 
     slice(13:24)
 
 dd <- data.frame(var = str_c("TETC", 1:12),
                  most_imp_r = as.numeric(diag(as.matrix(c13))),
-                 least_imp_r = as.numeric(diag(as.matrix(c14))))
+                 most_imp_r_p = as.numeric(diag(as.matrix(c13p))),
+                 least_imp_r = as.numeric(diag(as.matrix(c14))),
+                 least_imp_r_p = as.numeric(diag(as.matrix(c14p)))
+)
 
 write_csv(dd, "most-least-imp-corr.csv")
+```
+
+```{r}
+
 ```
