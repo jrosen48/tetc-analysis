@@ -5,7 +5,7 @@ Science,34,STEM
 Other,32,Other
 English / Language Arts,31,Non-STEM
 History / Social Studies,21,Non-STEM
-Special Education,21,Non-STEM
+Special Education,21,SpecEd
 Mathematics,17,STEM
 "Mathematics,Science",7,STEM
 "Technology,Other",6,Technology
@@ -17,7 +17,7 @@ Music,4,Non-STEM
 "English / Language Arts,Technology,Other",3,Non-STEM
 Physical Education & Health,3,Non-STEM
 "Science,Other",3,STEM
-"Special Education,Other",3,Non-STEM
+"Special Education,Other",3,SpecEd
 "English / Language Arts,Mathematics,Science,History / Social Studies,Physical Education & Health",2,Other
 "English / Language Arts,Mathematics,Science,History / Social Studies,World Languages",2,Other
 "English / Language Arts,Technology",2,Other

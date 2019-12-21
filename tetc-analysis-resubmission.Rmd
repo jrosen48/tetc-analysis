@@ -105,7 +105,6 @@ d <- d %>%
 ```{r}
 # For the descriptives
 
-```{r}
 d %>%
     dplyr::select(v1:v12) %>%
     summarize_all(funs(mean, sd), na.rm = TRUE) %>%
@@ -302,7 +301,8 @@ subject_plot <- subject_desc %>%
     xlab("Subject") +
     ylab("Mean TETC value") +
     theme(text = element_text(size = 18)) +
-    scale_x_discrete(labels = c("Humanities & Spec. Ed. (n = 97)", 
+    scale_x_discrete(labels = c("",
+                                "Humanities & Spec. Ed. (n = 97)", 
                                 "Science & Math (n = 73)",
                                 "Other (n = 78)",
                                 "Technology (n = 42)")) +
