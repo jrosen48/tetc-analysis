@@ -19,7 +19,6 @@ library(patchwork) # devtools::install_github("thomasp85/patchwork")
 library(psych)
 library(apaTables)
 library(nFactors)
-library(multcomp)
 library(onewaytests)
 
 usethis::use_git_ignore("*.csv")
