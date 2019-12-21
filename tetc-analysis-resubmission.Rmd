@@ -19,7 +19,8 @@ library(patchwork) # devtools::install_github("thomasp85/patchwork")
 library(psych)
 library(apaTables)
 library(nFactors)
-library(DTK)
+library(multcomp)
+library(onewaytests)
 
 usethis::use_git_ignore("*.csv")
 ```
@@ -95,6 +96,13 @@ d <- d %>%
     filter(!is.na(tetc_composite))
 ```
 
+# Assumptions
+
+- independence
+- normality
+- equal variances
+
+```{r}
 # For the descriptives
 
 ```{r}
@@ -193,9 +201,20 @@ d  %>%
     arrange(desc(n))%>%
     write_csv("grade-levels.csv")
 
+car::leveneTest(tetc_composite ~ Q7_code, data = d)
+
 grade_aov <- aov(tetc_composite ~ Q7_code, data = d)
 summary(grade_aov)
 apa.aov.table(grade_aov)
+
+car::leveneTest(tetc_composite ~ Q8_code, data = d)
+
+dd <- d %>% 
+    dplyr::select(tetc_composite, Q7_code) %>% 
+    mutate(Q7_code = as.factor(Q7_code))
+
+out <- welch.test(tetc_composite ~ Q7_code, data = dd)
+paircomp(out)
 
 TukeyHSD(grade_aov) %>% 
     pluck(1) %>% 
@@ -203,10 +222,6 @@ TukeyHSD(grade_aov) %>%
     rownames_to_column("comparison")
 
 TukeyHSD(grade_aov)
-
-# same diffs are diff from zero
-DTK::DTK.test(x = d$tetc_composite, 
-              f = d$Q7_code)
 
 # for mean values and sd
 grade_desc <- d %>% 
@@ -218,11 +233,19 @@ grade_desc <- d %>%
 
 grade_plot <- grade_desc %>% 
     ggplot(aes(x = reorder(Q7_code, mean), y = mean, ymin = mean - ((1.96*sd)/sqrt(336)), ymax = mean +((1.96*sd)/sqrt(336)))) +
-    geom_col() +
+    geom_col(fill = "gray") +
     geom_errorbar() +
     theme_bw() +
     xlab("Grade Level") +
-    ylab("Mean TETC value")
+    ylab("Mean TETC value") +
+    theme(text = element_text(size = 18)) +
+    scale_x_discrete(labels = c("Elementary (n = 58)", 
+                                "Secondary (n = 76)",
+                                "Other (n = 46)",
+                                "All (n = 156)")) +
+    xlab(NULL) + 
+    coord_flip() +
+    ggtitle("Grade")
 
 grade_plot 
 
@@ -244,6 +267,13 @@ subject_aov <- aov(tetc_composite ~ Q8_code, data = d_for_subject)
 summary(subject_aov)
 apa.aov.table(subject_aov)
 
+dd <- d %>% 
+    dplyr::select(tetc_composite, Q8_code) %>% 
+    mutate(Q8_code = as.factor(Q8_code))
+
+out <- welch.test(tetc_composite ~ Q8_code, data = dd)
+paircomp(out)
+
 TukeyHSD(subject_aov) %>% 
     pluck(1) %>% 
     as.data.frame() %>% 
@@ -257,6 +287,7 @@ DTK::DTK.test(x = d_for_subject$tetc_composite,
 
 # for mean values
 subject_desc <- d %>% 
+    filter(!is.na(Q8_code)) %>% 
     dplyr::select(Q8_code, v1:v12) %>% 
     gather(key, val, -Q8_code) %>% 
     group_by(Q8_code) %>% 
@@ -265,13 +296,104 @@ subject_desc <- d %>%
 
 subject_plot <- subject_desc %>% 
     ggplot(aes(x = reorder(Q8_code, mean), y = mean, ymin = mean - ((1.96*sd)/sqrt(336)), ymax = mean +((1.96*sd)/sqrt(336)))) +
-    geom_col() +
+    geom_col(fill = "gray") +
     geom_errorbar() +
     theme_bw() +
     xlab("Subject") +
-    ylab("Mean TETC value")
+    ylab("Mean TETC value") +
+    theme(text = element_text(size = 18)) +
+    scale_x_discrete(labels = c("Humanities & Spec. Ed. (n = 97)", 
+                                "Science & Math (n = 73)",
+                                "Other (n = 78)",
+                                "Technology (n = 42)")) +
+    xlab(NULL) + 
+    coord_flip() +
+    ggtitle("Subject")
 
 subject_plot
 
 ggsave("subject-plot-1.png", width = 6, height = 4)
+```
+
+## Combined plots
+
+```{r}
+grade_plot + subject_plot + plot_layout(nrow = 1, ncol = 2, heights = 1, 1.15)
+ggsave("combined-plot.png", width = 12, height = 7)
+```
+
+# Most/least important corrs
+
+```{r}
+#d2 <- gs_read(g, ws = 2, skip = 1)
+d2 <- readxl::read_excel("qual-coding.xlsx", sheet = 2, skip = 1)
+d2 <- d2 %>% rename(Q13 = `Please explain the one or two technology competencies that you consider as being most important to your individual work as a teacher educator.`) %>% slice(-c(338:339))
+d2 <- d2 %>% set_names(c("Q13", str_c("Q13-", names(d2)[-1])))
+d2 <- d2 %>% filter(!duplicated(Q13))
+
+d3 <- readxl::read_excel("qual-coding.xlsx", sheet = 3, skip = 1)
+d3 <- d3 %>% rename(Q14 = `Please explain one or more of the technology competencies that you consider of low or no importance to your individual work as a teacher educator.`) %>% slice(-c(338:339))
+d3 <- d3 %>% set_names(c("Q14", str_c("Q14-", names(d3)[-1])))
+d3 <- d3 %>% filter(!duplicated(Q14))
+```
+
+```{r}
+dx <- d %>% 
+    left_join(d2) %>% 
+    left_join(d3)
+
+# t <- dx %>% 
+#     dplyr::select(v1:v12, `Q13-1.0`:`Q13-12.0`) %>% 
+#     mutate_all(replace_na, 0)
+
+c13 <- dx %>% 
+    dplyr::select(v1:v12, `Q13-1.0`:`Q13-12.0`) %>% 
+    mutate_all(replace_na, 0) %>% 
+    corrr::correlate() %>% 
+    slice() %>% 
+    fashion() %>% 
+    dplyr::select(v1:v12) %>% 
+    slice(13:24)
+
+c13p <- dx %>% 
+    dplyr::select(v1:v12, `Q13-1.0`:`Q13-12.0`) %>% 
+    mutate_all(replace_na, 0) %>% 
+    as.matrix() %>% 
+    Hmisc::rcorr() %>% 
+    pluck(3) %>% 
+    as.data.frame() %>% 
+    slice() %>% 
+    dplyr::select(v1:v12) %>% 
+    slice(13:24)
+
+c14 <- dx %>% 
+    dplyr::select(v1:v12, `Q14-1.0`:`Q14-12.0`) %>% 
+    mutate_all(replace_na, 0) %>% 
+    corrr::correlate() %>% 
+    slice() %>% 
+    dplyr::select(v1:v12) %>% 
+    slice(13:24)
+
+c14p <- dx %>% 
+    dplyr::select(v1:v12, `Q14-1.0`:`Q14-12.0`) %>% 
+    mutate_if(is.character, as.numeric) %>% 
+    mutate_all(replace_na, 0) %>% 
+    as.matrix() %>% 
+    Hmisc::rcorr() %>% 
+    pluck(3) %>% 
+    as.data.frame() %>% 
+    slice() %>% 
+    dplyr::select(v1:v12) %>% 
+    slice(13:24)
+
+dd <- data.frame(var = str_c("TETC", 1:12),
+                 most_imp_r = as.numeric(diag(as.matrix(c13))),
+                 most_imp_r_p = as.numeric(diag(as.matrix(c13p))),
+                 least_imp_r = as.numeric(diag(as.matrix(c14))),
+                 least_imp_r_p = as.numeric(diag(as.matrix(c14p)))) %>% 
+    mutate_if(is.numeric, round, 3)
+
+dd
+
+write_csv(dd, "most-least-imp-corr.csv")
 ```
