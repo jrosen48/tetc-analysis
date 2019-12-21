@@ -6,3 +6,4 @@ full-tetcs-dataset.csv
 .RData
 .Ruserdata
 .httr-oauth
+packrat/lib*/
